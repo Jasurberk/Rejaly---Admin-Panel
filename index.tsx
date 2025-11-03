@@ -1,151 +1,24 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 
-// Helper for unique IDs (not robust, for demo purposes)
-let nextId = 1;
-const generateId = () => `item-${nextId++}`;
-
-// Helper to generate a 5-digit number
-const generateFiveDigitNumber = () => Math.floor(10000 + Math.random() * 90000);
-
-// Helper to generate business ID based on activity
-const generateBusinessId = (activity: string) => {
-    let prefixLetter = 'X'; // Default for 'Others'
-    switch (activity.toLowerCase()) {
-        case 'barbershop':
-            prefixLetter = 'B';
-            break;
-        case 'hair and make up salon':
-            prefixLetter = 'G';
-            break;
-        case 'nail salon':
-            prefixLetter = 'N';
-            break;
-        case 'football field rentals':
-            prefixLetter = 'F';
-            break;
-        case 'dental clinics':
-            prefixLetter = 'D';
-            break;
-        case 'videogaming clubs':
-            prefixLetter = 'V';
-            break;
-        case 'spa':
-            prefixLetter = 'S';
-            break;
-        default:
-            prefixLetter = 'X';
-    }
-    return `${prefixLetter}-${generateFiveDigitNumber()}`;
-};
-
-// Helper to generate a random date for "Date Added"
-const getRandomDate = (start: Date, end: Date) => {
-    const date = new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
-    return date.toISOString().split('T')[0]; // Format as YYYY-MM-DD
-};
-
-// Helper to generate a random city
-const getRandomCity = () => {
-    const cities = ['Tashkent', 'Samarkand', 'Bukhara', 'Khiva', 'Andijan', 'Fergana'];
-    return cities[Math.floor(Math.random() * cities.length)];
-};
-
-// Define core gender options for consistency
-const GENDER_OPTIONS = ['Male', 'Female', 'Prefer not to say'];
-
-// Helper to generate a random gender from the defined options
-const getRandomGender = () => {
-    return GENDER_OPTIONS[Math.floor(Math.random() * GENDER_OPTIONS.length)];
-};
-
-// Helper to generate a random birthday
-const getRandomBirthday = () => {
-    const start = new Date(1970, 0, 1);
-    const end = new Date(2005, 11, 31);
-    const date = new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
-    return date.toISOString().split('T')[0]; // Format as YYYY-MM-DD
-};
-
-// Helper to generate a random address
-const getRandomAddress = () => {
-    const streetNames = ['Main St', 'Oak Ave', 'Pine Ln', 'Elm Rd', 'Maple Dr'];
-    const streetTypes = ['St', 'Ave', 'Rd', 'Ln', 'Dr'];
-    const buildingNumbers = Math.floor(Math.random() * 900) + 100;
-    const apartmentNumber = Math.random() > 0.5 ? ` Apt ${Math.floor(Math.random() * 100) + 1}` : '';
-    return `${buildingNumbers} ${streetNames[Math.floor(Math.random() * streetNames.length)]}${apartmentNumber}`;
-};
-
-// Helper to generate a random favorite service type
-const getRandomFavoriteServiceType = () => {
-    const services = ['Haircut', 'Manicure', 'Facial', 'Massage', 'Barbershop', 'Pedicure', 'Gaming Session'];
-    return services[Math.floor(Math.random() * services.length)];
-};
-
-// Helper to generate random first names
-const getRandomFirstName = () => {
-    const names = ['Alice', 'Bob', 'Charlie', 'Diana', 'Eve', 'Frank', 'Grace', 'Henry'];
-    return names[Math.floor(Math.random() * names.length)];
-};
-
-// Helper to generate random last names
-const getRandomLastName = () => {
-    const names = ['Smith', 'Johnson', 'Brown', 'Prince', 'Davis', 'White', 'Miller', 'Jones'];
-    return names[Math.floor(Math.random() * names.length)];
-};
-
-// Helper to generate random phone numbers
-const getRandomPhoneNumber = () => {
-    const prefix = ['111', '444', '777', '123', '987', '555'];
-    const middle = Math.floor(100 + Math.random() * 900);
-    const last = Math.floor(1000 + Math.random() * 9000);
-    return `${prefix[Math.floor(Math.random() * prefix.length)]}-${middle}-${last}`;
-};
-
+// --- Type Definitions ---
 interface User {
     id: string;
     firstName: string;
     lastName: string;
+    gender: string;
     email: string;
     phone: string;
-    status: 'Active' | 'Inactive';
-    flagged: boolean;
-    city: string;
-    gender: string;
     birthday: string;
+    city: string;
     address?: string;
     favoriteServiceType?: string;
     dateJoined: string;
-    // For demonstration, not for real-world storage
-    passwordHash?: string; // Placeholder for security, never stored in plain text
-    profilePhotoUrl?: string; // New field for profile photo
+    status: 'Active' | 'Inactive' | 'Pending';
+    profilePhotoUrl?: string;
+    flagged: boolean;
+    passwordHash: string;
 }
-
-// Helper to generate a full random user
-const generateRandomUser = (): User => {
-    const firstName = getRandomFirstName();
-    const lastName = getRandomLastName();
-    const city = getRandomCity();
-    const gender = getRandomGender();
-    const dateJoined = getRandomDate(new Date(2022, 0, 1), new Date());
-    return {
-        id: generateId(),
-        firstName,
-        lastName,
-        email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}@example.com`,
-        phone: getRandomPhoneNumber(),
-        status: Math.random() > 0.8 ? 'Inactive' : 'Active',
-        flagged: Math.random() > 0.9,
-        city,
-        gender,
-        birthday: getRandomBirthday(),
-        address: getRandomAddress(),
-        favoriteServiceType: getRandomFavoriteServiceType(),
-        dateJoined,
-        passwordHash: 'dummy_user_hash', // In a real app, this would be a secure hash
-        profilePhotoUrl: undefined,
-    };
-};
 
 interface StaffMember {
     id: string;
@@ -156,42 +29,19 @@ interface StaffMember {
     phone: string;
     active: boolean;
     profilePhotoUrl?: string;
+    passwordHash: string;
 }
-
-const mockStaffProfileImageUrls: string[] = [
-    'https://via.placeholder.com/80/FF5733/FFFFFF?text=Staff1',
-    'https://via.placeholder.com/80/33FF57/FFFFFF?text=Staff2',
-    'https://via.placeholder.com/80/3357FF/FFFFFF?text=Staff3',
-    'https://via.placeholder.com/80/F5FF33/000000?text=Staff4',
-    'https://via.placeholder.com/80/FF33F5/FFFFFF?text=Staff5',
-];
-
-const getRandomStaffMember = (businessName: string): StaffMember => {
-    const firstName = getRandomFirstName();
-    const lastName = getRandomLastName();
-    const roles = ['Stylist', 'Barber', 'Technician', 'Manager', 'Assistant'];
-    return {
-        id: generateId(),
-        firstName,
-        lastName,
-        role: roles[Math.floor(Math.random() * roles.length)],
-        email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}@${businessName.toLowerCase().replace(/\s/g, '')}.com`,
-        phone: getRandomPhoneNumber(),
-        active: Math.random() > 0.2,
-        profilePhotoUrl: Math.random() > 0.5 ? mockStaffProfileImageUrls[Math.floor(Math.random() * mockStaffProfileImageUrls.length)] : undefined,
-    };
-};
 
 interface ServiceOffer {
     id: string;
     title: string;
     description: string;
-    price: number; // Stored in smallest currency unit (e.g., cents) or just as number for simplicity
+    price: number;
     durationMinutes: number;
-    discountPercentage?: number; // 0-100
-    discountAmount?: number; // Absolute discount value
-    discountStartDate?: string; // YYYY-MM-DD
-    discountEndDate?: string; // YYYY-MM-DD
+    discountPercentage?: number;
+    discountAmount?: number;
+    discountStartDate?: string;
+    discountEndDate?: string;
 }
 
 interface Client {
@@ -200,8 +50,8 @@ interface Client {
     lastName: string;
     email?: string;
     phone: string;
-    lastVisitDate?: string; // YYYY-MM-DD
-    upcomingVisitDate?: string; // YYYY-MM-DD
+    lastVisitDate?: string;
+    upcomingVisitDate?: string;
 }
 
 interface PortfolioItem {
@@ -210,32 +60,20 @@ interface PortfolioItem {
     caption: string;
 }
 
-interface CustomerReview {
-    id: string;
-    clientId: string; // ID of the user who left the review
-    clientName: string; // Name of the user (for display)
-    rating: number; // 1-5 stars
-    comment: string;
-    date: string; // YYYY-MM-DD
-    status: 'Active' | 'Flagged' | 'Hidden';
-    response?: {
-        adminId: string; // ID of the admin who responded
-        adminName: string;
-        text: string;
-        date: string;
-    };
+interface CustomerReviewResponse {
+    adminId: string;
+    adminName: string;
+    text: string;
+    date: string;
 }
 
-interface Booking {
+interface CustomerReview {
     id: string;
-    businessId: string; // New field
-    client: string;
-    business: string; // Business Name
-    city: string; // New field
-    service: string;
+    clientName: string;
+    rating: number;
+    comment: string;
     date: string;
-    time: string;
-    status: 'Pending' | 'Confirmed' | 'Completed' | 'Cancelled' | 'No-show';
+    response?: CustomerReviewResponse;
 }
 
 interface Business {
@@ -244,179 +82,200 @@ interface Business {
     activity: string;
     address: string;
     city: string;
-    status: 'Active' | 'Inactive' | 'Pending';
-    reviews: number; // Placeholder for aggregate rating
+    status: 'Active' | 'Pending' | 'Inactive';
+    reviews: number;
     dateAdded: string;
-    email: string; // New: for contact, password reset
-    phone: string; // New: for contact, password reset
-    description?: string; // New: additional info
-    website?: string; // New: business website
-    logoUrl?: string; // New: business logo
-    staff?: StaffMember[]; // List of staff members
-    passwordHash?: string; // For demonstration, not real storage
-    coverPhotoUrls?: string[]; // New: list of cover photos
-    serviceOffers?: ServiceOffer[]; // New: list of service offers
-    clients?: Client[]; // New: list of clients
-    portfolio?: PortfolioItem[]; // New: list of portfolio items
-    customerReviews?: CustomerReview[]; // New: list of customer reviews
+    email: string;
+    phone: string;
+    description: string;
+    website?: string;
+    logoUrl?: string;
+    staff?: StaffMember[];
+    passwordHash: string;
+    coverPhotoUrls?: string[];
+    serviceOffers?: ServiceOffer[];
+    clients?: Client[];
+    portfolio?: PortfolioItem[];
+    customerReviews?: CustomerReview[];
 }
 
-// Helper for mock cover photo URLs
-const mockCoverPhotoUrls: string[] = [
-    'https://via.placeholder.com/150/FF5733/FFFFFF?text=Photo1',
-    'https://via.placeholder.com/150/33FF57/FFFFFF?text=Photo2',
-    'https://via.placeholder.com/150/3357FF/FFFFFF?text=Photo3',
-    'https://via.placeholder.com/150/F5FF33/000000?text=Photo4',
-    'https://via.placeholder.com/150/FF33F5/FFFFFF?text=Photo5',
+interface Booking {
+    id: string;
+    businessId: string;
+    clientId: string;
+    client: string;
+    business: string;
+    city: string;
+    service: string;
+    date: string;
+    time: string;
+    status: 'Confirmed' | 'Pending' | 'Completed' | 'Cancelled' | 'No-show';
+}
+
+
+// --- Helper Functions and Mock Data ---
+
+const cities = ['Tashkent', 'Samarkand', 'Bukhara', 'Khiva', 'Fergana', 'Andijan', 'Namangan', 'Nukus', 'Termez', 'Urgench'];
+const genders = ['Male', 'Female', 'Non-binary', 'Prefer not to say'];
+const firstNames = ['John', 'Jane', 'Alex', 'Sarah', 'Michael', 'Emily', 'David', 'Sophia', 'Chris', 'Olivia'];
+const lastNames = ['Doe', 'Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis', 'Rodriguez'];
+const roles = ['Stylist', 'Barber', 'Technician', 'Instructor', 'Administrator', 'Manager'];
+
+const mockCoverPhotoUrls = [
+    'https://via.placeholder.com/600x400/FF5733/FFFFFF?text=CoverPhoto1',
+    'https://via.placeholder.com/600x400/33FF57/FFFFFF?text=CoverPhoto2',
+    'https://via.placeholder.com/600x400/3357FF/FFFFFF?text=CoverPhoto3',
+    'https://via.placeholder.com/600x400/FFFF33/000000?text=CoverPhoto4',
+    'https://via.placeholder.com/600x400/FF33FF/FFFFFF?text=CoverPhoto5',
 ];
 
-// Helper for mock portfolio images
-const mockPortfolioImageUrls: string[] = [
-    'https://via.placeholder.com/300/FF5733/FFFFFF?text=Style1',
-    'https://via.placeholder.com/300/33FF57/FFFFFF?text=Style2',
-    'https://via.placeholder.com/300/3357FF/FFFFFF?text=Result1',
-    'https://via.placeholder.com/300/F5FF33/000000?text=Work2',
-    'https://via.placeholder.com/300/FF33F5/FFFFFF?text=BeforeAfter',
+const mockPortfolioImageUrls = [
+    'https://via.placeholder.com/400x300/8B4513/FFFFFF?text=Portfolio1',
+    'https://via.placeholder.com/400x300/20B2AA/FFFFFF?text=Portfolio2',
+    'https://via.placeholder.com/400x300/6A5ACD/FFFFFF?text=Portfolio3',
+    'https://via.placeholder.com/400x300/BA55D3/FFFFFF?text=Portfolio4',
+    'https://via.placeholder.com/400x300/4682B4/FFFFFF?text=Portfolio5',
 ];
 
+const GENDER_OPTIONS = ['Male', 'Female', 'Non-binary', 'Prefer not to say'];
 
-// Helper to generate a random service offer for a given activity
-const generateRandomServiceOffer = (activity: string): ServiceOffer => {
-    const serviceTemplates: { [key: string]: { title: string; description: string; basePrice: number; duration: number }[] } = {
-        'Barbershop': [
-            { title: 'Haircut', description: 'Standard men\'s haircut', basePrice: 25, duration: 30 },
-            { title: 'Beard Trim', description: 'Precision beard shaping and trimming', basePrice: 15, duration: 15 },
-            { title: 'Hair & Beard Trim', description: 'Full haircut and beard service', basePrice: 35, duration: 45 },
-            { title: 'Head Shave', description: 'Close head shave with hot towel', basePrice: 20, duration: 25 },
-        ],
-        'Hair and Make Up Salon': [
-            { title: 'Women\'s Haircut', description: 'Styling, wash, and cut', basePrice: 60, duration: 60 },
-            { title: 'Hair Coloring', description: 'Full hair color, includes wash and blow dry', basePrice: 120, duration: 120 },
-            { title: 'Makeup Application', description: 'Professional makeup for special occasions', basePrice: 80, duration: 45 },
-            { title: 'Updo', description: 'Elegant updo for events', basePrice: 75, duration: 60 },
-        ],
-        'Nail Salon': [
-            { title: 'Manicure', description: 'Classic manicure with polish', basePrice: 30, duration: 40 },
-            { title: 'Pedicure', description: 'Relaxing pedicure with foot massage', basePrice: 45, duration: 50 },
-            { title: 'Gel Manicure', description: 'Long-lasting gel polish application', basePrice: 40, duration: 55 },
-        ],
-        'Football Field Rentals': [
-            { title: '1 Hour Rental', description: 'Full size football field rental for 1 hour', basePrice: 100, duration: 60 },
-            { title: '2 Hour Rental', description: 'Full size football field rental for 2 hours', basePrice: 180, duration: 120 },
-        ],
-        'Dental Clinics': [
-            { title: 'Check-up & Cleaning', description: 'Comprehensive dental examination and cleaning', basePrice: 80, duration: 45 },
-            { title: 'Teeth Whitening', description: 'Professional in-office teeth whitening', basePrice: 300, duration: 90 },
-        ],
-        'Videogaming Clubs': [
-            { title: '1 Hour PC Rental', description: 'High-end PC rental for 1 hour', basePrice: 10, duration: 60 },
-            { title: 'All Day Pass', description: 'Unlimited PC access for a full day', basePrice: 40, duration: 480 },
-        ],
-        'Spa': [
-            { title: 'Relaxation Massage', description: 'Full body relaxation massage', basePrice: 90, duration: 60 },
-            { title: 'Hot Stone Massage', description: 'Therapeutic massage with heated stones', basePrice: 120, duration: 75 },
-            { title: 'Facial Treatment', description: 'Customized facial for skin rejuvenation', basePrice: 70, duration: 60 },
-        ],
-        'Others': [
-            { title: 'Consultation', description: 'General consultation service', basePrice: 50, duration: 30 },
-            { title: 'Special Service', description: 'Customizable special service', basePrice: 100, duration: 60 },
-        ]
-    };
+// Helper to generate a unique ID
+const generateId = (): string => Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 
-    const templates = serviceTemplates[activity] || serviceTemplates['Others'];
-    const template = templates[Math.floor(Math.random() * templates.length)];
+const generateFiveDigitNumber = (): string => Math.floor(10000 + Math.random() * 90000).toString();
 
-    const hasDiscount = Math.random() > 0.7; // 30% chance for a discount
-    let discount: Partial<ServiceOffer> = {};
-    if (hasDiscount) {
-        if (Math.random() > 0.5) { // 50% chance for percentage discount
-            discount.discountPercentage = Math.floor(Math.random() * 20) + 5; // 5-25% discount
-            discount.discountAmount = undefined;
-        } else { // 50% chance for fixed amount discount
-            discount.discountAmount = Math.floor(Math.random() * 10) + 5; // $5-15 discount
-            discount.discountPercentage = undefined;
-        }
-        const today = new Date();
-        const futureDate = new Date();
-        futureDate.setDate(today.getDate() + Math.floor(Math.random() * 30) + 7); // Discount ends in 1-4 weeks
-        discount.discountStartDate = today.toISOString().split('T')[0];
-        discount.discountEndDate = futureDate.toISOString().split('T')[0];
-    }
+const generateBusinessId = (activity: string): string => `biz-${activity.toLowerCase().replace(/\s/g, '-')}-${generateFiveDigitNumber()}`;
 
-    return {
-        id: generateId(),
-        title: template.title,
-        description: template.description,
-        price: template.basePrice,
-        durationMinutes: template.duration,
-        ...discount,
-    };
+const getRandomCity = (): string => cities[Math.floor(Math.random() * cities.length)];
+
+const getRandomDate = (start: Date, end: Date): string => {
+    const date = new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
+    return date.toISOString().split('T')[0];
 };
 
-const generateRandomServiceOffers = (activity: string, count: number): ServiceOffer[] => {
-    return Array.from({ length: count }, () => generateRandomServiceOffer(activity));
-};
+const getRandomPhoneNumber = (): string => `+998${Math.floor(100000000 + Math.random() * 900000000)}`; // Uzbek phone format
 
-const generateRandomClient = (): Client => {
-    const firstName = getRandomFirstName();
-    const lastName = getRandomLastName();
-    const hasEmail = Math.random() > 0.3; // 70% chance to have an email
-    const hasUpcomingVisit = Math.random() > 0.6; // 40% chance for an upcoming visit
+const getRandomAddress = (): string => `${Math.floor(Math.random() * 100) + 1} ${['Main St', 'Park Ave', 'Highland Rd', 'Oak Ln'][Math.floor(Math.random() * 4)]}`;
 
-    const lastVisitDate = getRandomDate(new Date(2023, 0, 1), new Date());
-    let upcomingVisitDate: string | undefined;
-    if (hasUpcomingVisit) {
-        upcomingVisitDate = getRandomDate(new Date(), new Date(new Date().getFullYear(), new Date().getMonth() + 3, 0));
-    }
-
+const getRandomStaffMember = (businessName: string): StaffMember => {
+    const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
+    const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
+    const role = roles[Math.floor(Math.random() * roles.length)];
     return {
         id: generateId(),
         firstName,
         lastName,
-        email: hasEmail ? `${firstName.toLowerCase()}.${lastName.toLowerCase()}@example.com` : undefined,
+        role,
+        email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}@${businessName.toLowerCase().replace(/\s/g, '')}.com`,
         phone: getRandomPhoneNumber(),
-        lastVisitDate,
-        upcomingVisitDate,
+        active: Math.random() > 0.1, // 90% active
+        passwordHash: 'staff_hash',
+        profilePhotoUrl: Math.random() > 0.7 ? `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 70)}` : undefined,
     };
+};
+
+const generateRandomServiceOffers = (activity: string, count: number): ServiceOffer[] => {
+    const offers: ServiceOffer[] = [];
+    const baseServices = {
+        'Barbershop': ['Haircut', 'Beard Trim', 'Shave', 'Kids Haircut', 'Coloring'],
+        'Hair and Make Up Salon': ['Hair Styling', 'Hair Coloring', 'Make Up Application', 'Bridal Package', 'Hair Treatment'],
+        'Nail Salon': ['Manicure', 'Pedicure', 'Gel Nails', 'Acrylic Nails', 'Nail Art'],
+        'Football Field Rentals': ['1 Hour Rental', '2 Hour Rental', 'Half-Day Package', 'Full-Day Package'],
+        'Dental Clinics': ['Check-up', 'Cleaning', 'Filling', 'Whitening', 'Extraction'],
+        'Videogaming Clubs': ['Hourly Pass', 'Half-Day Pass', 'Full-Day Pass', 'VIP Booth'],
+        'Spa': ['Massage', 'Facial', 'Body Wrap', 'Sauna Access', 'Couple\'s Package'],
+        'Others': ['Consultation', 'Basic Service', 'Premium Package'],
+    };
+    const availableServices = baseServices[activity as keyof typeof baseServices] || baseServices['Others'];
+
+    for (let i = 0; i < count; i++) {
+        const title = availableServices[i % availableServices.length];
+        const price = parseFloat((Math.random() * 50 + 20).toFixed(2));
+        const durationMinutes = Math.floor(Math.random() * 90) + 30;
+        offers.push({
+            id: generateId(),
+            title: `${title} - ${activity.split(' ')[0]}`,
+            description: `Professional ${title.toLowerCase()} service.`,
+            price,
+            durationMinutes,
+        });
+    }
+    return offers;
 };
 
 const generateRandomClients = (count: number): Client[] => {
-    return Array.from({ length: count }, generateRandomClient);
-};
-
-const getRandomReviewComment = (rating: number): string => {
-    const comments = {
-        1: ['Terrible experience, would not recommend.', 'Very disappointed with the service.', 'Awful, avoid this place.'],
-        2: ['Not great, could be much better.', 'Mediocre service, left feeling unsatisfied.', 'Below average.'],
-        3: ['It was okay, nothing special.', 'Decent enough, but room for improvement.', 'Average experience.'],
-        4: ['Good service, happy with the outcome.', 'Enjoyable visit, might return.', 'Pretty good!'],
-        5: ['Excellent! Highly recommend!', 'Fantastic experience, will definitely be back!', 'Best in town, superb service!'],
-    };
-    const options = comments[rating] || comments[3]; // Fallback to 3-star comments
-    return options[Math.floor(Math.random() * options.length)];
+    const clients: Client[] = [];
+    for (let i = 0; i < count; i++) {
+        const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
+        const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
+        clients.push({
+            id: generateId(),
+            firstName,
+            lastName,
+            email: Math.random() > 0.3 ? `${firstName.toLowerCase()}.${lastName.toLowerCase()}@example.com` : undefined,
+            phone: getRandomPhoneNumber(),
+            lastVisitDate: getRandomDate(new Date(2023, 0, 1), new Date()),
+            upcomingVisitDate: Math.random() > 0.5 ? getRandomDate(new Date(), new Date(2025, 0, 1)) : undefined,
+        });
+    }
+    return clients;
 };
 
 const generateRandomCustomerReview = (): CustomerReview => {
-    const firstName = getRandomFirstName();
-    const lastName = getRandomLastName();
-    const rating = Math.floor(Math.random() * 5) + 1; // 1 to 5
-    const comment = getRandomReviewComment(rating);
-    const date = getRandomDate(new Date(2023, 6, 1), new Date()); // Reviews from last year
+    const clientFirstName = firstNames[Math.floor(Math.random() * firstNames.length)];
+    const clientLastName = lastNames[Math.floor(Math.random() * lastNames.length)];
+    const rating = Math.floor(Math.random() * 3) + 3; // 3 to 5 stars
+    const comments = [
+        'Excellent service!', 'Very good experience.', 'Could be better.', 'Friendly staff and great results.',
+        'Highly recommend!', 'Quick and efficient.', 'A bit pricy but worth it.', 'Will definitely come back.'
+    ];
+    const comment = comments[Math.floor(Math.random() * comments.length)];
+    const date = getRandomDate(new Date(2024, 0, 1), new Date());
 
     return {
         id: generateId(),
-        clientId: generateId(), // Mock client ID
-        clientName: `${firstName} ${lastName}`,
+        clientName: `${clientFirstName} ${clientLastName}`,
         rating,
         comment,
         date,
-        status: Math.random() > 0.9 ? 'Flagged' : 'Active', // 10% flagged
-        response: Math.random() > 0.7 ? { // 30% have a response
+        response: Math.random() > 0.5 ? {
             adminId: 'admin-001',
             adminName: 'Admin Joe',
             text: 'Thank you for your feedback! We appreciate your business.',
             date: getRandomDate(new Date(date), new Date()),
         } : undefined,
+    };
+};
+
+
+const generateRandomUser = (): User => {
+    const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
+    const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
+    const gender = genders[Math.floor(Math.random() * genders.length)];
+    const city = getRandomCity();
+    const dateJoined = getRandomDate(new Date(2023, 0, 1), new Date());
+    const email = `${firstName.toLowerCase()}.${lastName.toLowerCase()}@example.com`;
+    const phone = getRandomPhoneNumber();
+    const birthday = getRandomDate(new Date(1970, 0, 1), new Date(2005, 0, 1));
+    const status = ['Active', 'Pending', 'Inactive'][Math.floor(Math.random() * 3)] as User['status'];
+    const flagged = Math.random() > 0.9; // 10% chance of being flagged
+
+    return {
+        id: generateId(),
+        firstName,
+        lastName,
+        gender,
+        email,
+        phone,
+        birthday,
+        city,
+        address: Math.random() > 0.5 ? getRandomAddress() : undefined,
+        favoriteServiceType: Math.random() > 0.5 ? ['Haircut', 'Massage', 'Manicure', 'Dental Checkup'][Math.floor(Math.random() * 4)] : undefined,
+        dateJoined,
+        status,
+        profilePhotoUrl: Math.random() > 0.3 ? `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 70)}` : undefined,
+        passwordHash: 'dummy_user_hash',
+        flagged,
     };
 };
 
@@ -509,15 +368,15 @@ const Header: React.FC<{ currentSectionTitle: string; titleOverride?: string; on
     </header>
 );
 
-const Sidebar: React.FC<{ activeSection: string; onSelectSection: (section: string) => void; onToggleDarkMode: () => void; isDarkMode: boolean }> = ({ activeSection, onSelectSection, onToggleDarkMode, isDarkMode }) => {
+const Sidebar: React.FC<{ activeSection: string; onSelectSection: (section: string) => void; onOpenSettings: () => void; onLogout: () => void; }> = ({ activeSection, onSelectSection, onOpenSettings, onLogout }) => {
     const sections = [
         { id: 'user-management', name: '🧍‍♂️ User Management' },
         { id: 'business-management', name: '💈 Business Management' },
         { id: 'booking-management', name: '📅 Booking Management' },
-        { id: 'payments-transactions', name: '💰 Payments & Transactions' },
+        { id: 'notifications-communication', name: '⚡ Notifications' }, // Moved
         { id: 'reviews-ratings-reports', name: '💬 Reviews & Reports' },
         { id: 'analytics-dashboard', name: '📊 Analytics Dashboard' },
-        { id: 'notifications-communication', name: '⚡ Notifications' },
+        { id: 'payments-transactions', name: '💰 Payments & Transactions' }, // Moved
         { id: 'platform-configuration', name: '🧱 Platform Configuration' },
         { id: 'support-issue-resolution', name: '🚨 Support & Issues' },
         { id: 'developer-maintenance', name: '🧰 Dev & Maintenance' },
@@ -589,14 +448,14 @@ const Sidebar: React.FC<{ activeSection: string; onSelectSection: (section: stri
                 </ul>
             </div>
 
-            {/* Dark Mode and Logout at the bottom */}
+            {/* Settings and Logout at the bottom */}
             <div style={{
                 padding: '20px',
                 borderTop: '1px solid var(--border-color)',
                 marginTop: 'auto',
                 flexShrink: 0, // Prevent footer from shrinking
             }}>
-                <button onClick={onToggleDarkMode} style={{
+                <button onClick={onOpenSettings} style={{
                     width: '100%',
                     background: 'none',
                     border: '1px solid var(--border-color)',
@@ -608,10 +467,10 @@ const Sidebar: React.FC<{ activeSection: string; onSelectSection: (section: stri
                     fontSize: '0.9em',
                     transition: 'background-color 0.2s, border-color 0.2s',
                 }}>
-                    {isDarkMode ? '☀️ Light Mode' : '🌙 Dark Mode'}
+                    ⚙️ Settings
                 </button>
                 <button
-                    onClick={() => console.log('Logout clicked')} // Placeholder for logout functionality
+                    onClick={onLogout}
                     style={{
                         width: '100%',
                         background: 'none',
@@ -623,6 +482,7 @@ const Sidebar: React.FC<{ activeSection: string; onSelectSection: (section: stri
                         fontSize: '0.9em',
                         transition: 'background-color 0.2s, border-color 0.2s',
                     }}
+                    aria-label="Logout"
                 >
                     Logout
                 </button>
@@ -1051,7 +911,7 @@ const UserActivityViewer: React.FC<UserActivityViewerProps> = ({ user, onClose }
                 <div style={{ marginBottom: '20px' }}>
                     {mockReviews.map((review, index) => (
                         <div key={review.id} style={{
-                            borderLeft: `3px solid ${review.rating >= 4 ? 'var(--success-color)' : review.rating <= 2 ? 'var(--danger-color)' : 'var(--primary-color)'}`,
+                            borderLeft: `33px solid ${review.rating >= 4 ? 'var(--success-color)' : review.rating <= 2 ? 'var(--danger-color)' : 'var(--primary-color)'}`,
                             paddingLeft: '15px',
                             marginBottom: '10px',
                             background: 'var(--background-color)',
@@ -1222,7 +1082,7 @@ const StaffProfileEditor: React.FC<StaffProfileEditorProps> = ({ staffMember, on
                 </div>
                 <div style={{ marginBottom: '10px' }}>
                     <label htmlFor="staffStatus" style={{ display: 'block', marginBottom: '3px', fontSize: '0.9em', color: 'var(--text-color-light-gray)' }}>Status:</label>
-                    <select id="staffStatus" name="active" value={formData.active ? 'Active' : 'Inactive'} onChange={e => handleChange({ ...e, target: { ...e.target, value: e.target.value === 'Active' ? true : false, type: 'checkbox' } as HTMLSelectElement })} style={{ width: '100%' }} aria-label="Staff Status">
+                    <select id="staffStatus" name="active" value={formData.active ? 'Active' : 'Inactive'} onChange={e => handleChange({ ...e, target: { ...e.target, value: e.target.value === 'Active' ? 'true' : 'false', type: 'checkbox' } as HTMLSelectElement })} style={{ width: '100%' }} aria-label="Staff Status">
                         <option value="Active">Active</option>
                         <option value="Inactive">Inactive</option>
                     </select>
@@ -1388,8 +1248,10 @@ const BusinessStaffManager: React.FC<BusinessStaffManagerProps> = ({ business, o
         handleStaffProfileEditorClose();
     };
 
-    const handleStaffPhotoUpload = (file: File, staffId: string) => {
-        onUploadStaffMedia(file, staffId, business.id);
+    const handleStaffPhotoUpload = (file: File) => { // staffId is implicitly from selectedStaffMember.id
+        if (selectedStaffMember) {
+            onUploadStaffMedia(file, selectedStaffMember.id, business.id);
+        }
     };
 
     const handleFinalSave = () => {
@@ -2189,7 +2051,7 @@ const BusinessPasswordReset: React.FC<BusinessPasswordResetProps> = ({ business,
             margin: '0 auto', // Center the form
             height: 'fit-content',
             overflowY: 'auto',
-            boxSizing: 'border-sizing',
+            boxSizing: 'border-box',
         }}>
             <h4 style={{ marginTop: 0, marginBottom: '20px', textAlign: 'center', color: 'var(--text-color)' }}>Reset Password for {business.name}</h4>
             <p style={{ textAlign: 'center', marginBottom: '20px', opacity: 0.8 }}>Admin override options</p>
@@ -2202,6 +2064,7 @@ const BusinessPasswordReset: React.FC<BusinessPasswordResetProps> = ({ business,
             </div>
             <div style={{ marginBottom: '20px' }}>
                 <label htmlFor="bizConfirmPassword" style={{ display: 'block', marginBottom: '3px', fontSize: '0.9em', color: 'var(--text-color-light-gray)' }}>Confirm New Password:</label>
+                {/* Fix: Changed setConfirmNewPassword to setConfirmPassword */}
                 <input type="password" id="bizConfirmPassword" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} style={{ width: '100%' }} aria-label="Confirm New Password" />
             </div>
 
@@ -2235,6 +2098,7 @@ const BusinessProfileEditor: React.FC<BusinessProfileEditorProps> = ({ business,
     const [formData, setFormData] = useState<Business>(business);
     const [isUploadCoverPhotoModalOpen, setIsUploadCoverPhotoModalOpen] = useState(false);
     const [isDeletingCoverPhotos, setIsDeletingCoverPhotos] = useState(false);
+    // Fix: Initialize selectedCoverPhotosForDeletion as a Set
     const [selectedCoverPhotosForDeletion, setSelectedCoverPhotosForDeletion] = useState<Set<string>>(new Set());
 
     const coverPhotosRef = useRef<HTMLDivElement>(null);
@@ -2242,6 +2106,7 @@ const BusinessProfileEditor: React.FC<BusinessProfileEditorProps> = ({ business,
     useEffect(() => {
         setFormData(business);
         setIsDeletingCoverPhotos(false);
+        // Fix: Ensure selectedCoverPhotosForDeletion is reset as a Set
         setSelectedCoverPhotosForDeletion(new Set());
     }, [business]);
 
@@ -2263,6 +2128,7 @@ const BusinessProfileEditor: React.FC<BusinessProfileEditorProps> = ({ business,
     };
 
     const togglePhotoSelection = (url: string) => {
+        // Fix: Use Set methods correctly
         setSelectedCoverPhotosForDeletion(prev => {
             const newSet = new Set(prev);
             if (newSet.has(url)) {
@@ -2351,6 +2217,7 @@ const BusinessProfileEditor: React.FC<BusinessProfileEditorProps> = ({ business,
                                     </>
                                 ) : (
                                     <>
+                                        {/* Fix: use .size property for Set */}
                                         <button className="btn-success" onClick={confirmDeleteSelectedPhotos} disabled={selectedCoverPhotosForDeletion.size === 0} aria-label="Confirm delete selected photos">Confirm Deletion ({selectedCoverPhotosForDeletion.size})</button>
                                         <button className="btn-secondary" onClick={cancelDeletePhotos} aria-label="Cancel deletion">Cancel</button>
                                     </>
@@ -2392,10 +2259,12 @@ const BusinessProfileEditor: React.FC<BusinessProfileEditorProps> = ({ business,
                                                     flexShrink: 0,
                                                     borderRadius: '4px',
                                                     overflow: 'hidden',
+                                                    // Fix: Use Set.has method correctly
                                                     border: isDeletingCoverPhotos && selectedCoverPhotosForDeletion.has(url) ? '2px solid var(--danger-color)' : '1px solid var(--border-color)',
                                                     cursor: isDeletingCoverPhotos ? 'pointer' : 'default',
                                                     transition: 'border-color 0.2s',
                                                 }}
+                                                // Fix: Use Set.has method correctly
                                                 onClick={() => isDeletingCoverPhotos && togglePhotoSelection(url)}
                                                 aria-label={`Cover photo ${index + 1}`}
                                             >
@@ -2407,6 +2276,7 @@ const BusinessProfileEditor: React.FC<BusinessProfileEditorProps> = ({ business,
                                                         left: 0,
                                                         right: 0,
                                                         bottom: 0,
+                                                        // Fix: Use Set.has method correctly
                                                         backgroundColor: selectedCoverPhotosForDeletion.has(url) ? 'rgba(220, 53, 69, 0.5)' : 'rgba(0,0,0,0.3)',
                                                         display: 'flex',
                                                         alignItems: 'center',
@@ -2414,6 +2284,7 @@ const BusinessProfileEditor: React.FC<BusinessProfileEditorProps> = ({ business,
                                                         color: 'white',
                                                         fontSize: '1.5em',
                                                     }} aria-hidden="true">
+                                                        {/* Fix: Use Set.has method correctly */}
                                                         {selectedCoverPhotosForDeletion.has(url) ? '🗑️' : 'Click to select'}
                                                     </div>
                                                 )}
@@ -2507,7 +2378,7 @@ const BusinessProfileEditor: React.FC<BusinessProfileEditorProps> = ({ business,
                     <button className="btn-secondary" onClick={() => onViewReviews(business)} style={{ width: '100%' }} aria-label="View Reviews">View Reviews</button> {/* New button */}
                     <button className="btn-secondary" onClick={() => onViewActivity(business)} style={{ width: '100%' }} aria-label="View Business Activity">View Activity</button>
                     <button className="btn-danger" onClick={() => onResetPassword(business)} style={{ width: '100%' }} aria-label="Reset Business Password">Reset Password</button>
-                    <div style={{ borderTop: '1px solid var(--border-color)', width: '100%', margin: '10px 0' }} /> {/* Separator */}
+                    <div style={{ borderTop: '1px solid var(--border-color)', width: '100%', margin: '10px 0' }}></div> {/* Separator */}
                     <button className="btn-secondary" onClick={onClose} style={{ width: '100%' }} aria-label="Go Back to business list">Go Back</button>
                     <button onClick={handleSave} style={{ width: '100%' }} aria-label="Save Changes">Save Changes</button>
                 </div>
@@ -3134,10 +3005,10 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, setUsers, onEdit
 interface BusinessManagementProps {
     businesses: Business[];
     setBusinesses: React.Dispatch<React.SetStateAction<Business[]>>;
-    onEditBusiness: (business: Business) => void;
+    onEditBusiness: (business: Business, origin: 'businessManagement' | 'bookingManagement') => void;
     onManageStaff: (business: Business) => void;
-    onViewActivity: (business: Business) => void;
-    onResetPassword: (business: Business) => void;
+    onViewActivity: (business: Business, origin: 'businessManagement' | 'bookingManagement') => void;
+    onResetPassword: (business: Business, origin: 'businessManagement' | 'bookingManagement') => void;
     onManageServiceOffers: (business: Business) => void;
     onManageClients: (business: Business) => void; // New prop
     onManagePortfolio: (business: Business) => void; // New prop
@@ -3162,7 +3033,7 @@ const BusinessManagement: React.FC<BusinessManagementProps> = ({ businesses, set
     const uniqueCities = useMemo(() => ['All', ...new Set(businesses.map(b => b.city))].sort(), [businesses]);
 
     const handleEditBusinessClick = (business: Business) => {
-        onEditBusiness(business);
+        onEditBusiness(business, 'businessManagement');
     };
 
     const handleOpenManageStaffClick = (business: Business) => {
@@ -3170,11 +3041,11 @@ const BusinessManagement: React.FC<BusinessManagementProps> = ({ businesses, set
     };
 
     const handleOpenBusinessActivityClick = (business: Business) => {
-        onViewActivity(business);
+        onViewActivity(business, 'businessManagement');
     };
 
     const handleOpenResetBusinessPasswordClick = (business: Business) => {
-        onResetPassword(business);
+        onResetPassword(business, 'businessManagement');
     };
 
     const handleOpenManageServiceOffersClick = (business: Business) => {
@@ -3355,16 +3226,25 @@ const BusinessManagement: React.FC<BusinessManagementProps> = ({ businesses, set
 };
 
 // Helper to generate booking ID
-const generateBookingId = (businessId: string) => `${businessId}-${generateFiveDigitNumber()}`;
+const generateBookingId = (entityId: string) => `${entityId}-${generateFiveDigitNumber()}`;
 
-const BookingEditor: React.FC<{
+interface BookingEditorProps {
     booking: Booking;
     onClose: () => void;
     onSave: (updatedBooking: Booking) => void;
     onCancelBooking: (bookingId: string) => void;
     onRefundBooking: (bookingId: string) => void;
-}> = ({ booking, onClose, onSave, onCancelBooking, onRefundBooking }) => {
+    onViewUserProfile: (user: User, origin: 'userManagement' | 'bookingManagement') => void;
+    onViewBusinessProfile: (business: Business, origin: 'businessManagement' | 'bookingManagement') => void;
+    allUsers: User[];
+    allBusinesses: Business[];
+}
+
+const BookingEditor: React.FC<BookingEditorProps> = ({ booking, onClose, onSave, onCancelBooking, onRefundBooking, onViewUserProfile, onViewBusinessProfile, allUsers, allBusinesses }) => {
     const [formData, setFormData] = useState<Booking>(booking);
+
+    const clientUser = useMemo(() => allUsers.find(u => u.id === booking.clientId), [allUsers, booking.clientId]);
+    const businessDetail = useMemo(() => allBusinesses.find(b => b.id === booking.businessId), [allBusinesses, booking.businessId]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -3409,11 +3289,49 @@ const BookingEditor: React.FC<{
                 </div>
                 <div style={{ marginBottom: '10px' }}>
                     <label style={{ display: 'block', marginBottom: '3px', fontSize: '0.9em', color: 'var(--text-color-light-gray)' }}>Client:</label>
-                    <input type="text" value={formData.client} readOnly style={{ width: '100%' }} aria-label="Client Name" />
+                    {clientUser ? (
+                        <button
+                            onClick={() => onViewUserProfile(clientUser, 'bookingManagement')}
+                            style={{
+                                background: 'none',
+                                border: 'none',
+                                padding: '0',
+                                color: 'var(--primary-color)',
+                                cursor: 'pointer',
+                                textDecoration: 'underline',
+                                textAlign: 'left',
+                                fontSize: '1em',
+                            }}
+                            aria-label={`View profile for client ${clientUser.firstName} ${clientUser.lastName}`}
+                        >
+                            {formData.client}
+                        </button>
+                    ) : (
+                        <span style={{ color: 'var(--text-color)' }}>{formData.client} (ID: {formData.clientId})</span>
+                    )}
                 </div>
                 <div style={{ marginBottom: '10px' }}>
                     <label style={{ display: 'block', marginBottom: '3px', fontSize: '0.9em', color: 'var(--text-color-light-gray)' }}>Business:</label>
-                    <input type="text" value={formData.business} readOnly style={{ width: '100%' }} aria-label="Business Name" />
+                    {businessDetail ? (
+                        <button
+                            onClick={() => onViewBusinessProfile(businessDetail, 'bookingManagement')}
+                            style={{
+                                background: 'none',
+                                border: 'none',
+                                padding: '0',
+                                color: 'var(--primary-color)',
+                                cursor: 'pointer',
+                                textDecoration: 'underline',
+                                textAlign: 'left',
+                                fontSize: '1em',
+                            }}
+                            aria-label={`View profile for business ${businessDetail.name}`}
+                        >
+                            {formData.business}
+                        </button>
+                    ) : (
+                        <span style={{ color: 'var(--text-color)' }}>{formData.business} (ID: {formData.businessId})</span>
+                    )}
                 </div>
                 <div style={{ marginBottom: '10px' }}>
                     <label style={{ display: 'block', marginBottom: '3px', fontSize: '0.9em', color: 'var(--text-color-light-gray)' }}>City:</label>
@@ -3455,20 +3373,27 @@ const BookingEditor: React.FC<{
 
 interface BookingManagementProps {
     allBusinesses: Business[]; // Pass all businesses for realistic booking generation
+    allUsers: User[]; // New prop for user data
+    onViewUserProfile: (user: User, origin: 'userManagement' | 'bookingManagement') => void;
+    onViewBusinessProfile: (business: Business, origin: 'businessManagement' | 'bookingManagement') => void;
+    onEditBookingFromMgmt: (booking: Booking) => void; // New prop to pass selected booking up
+    onCloseBookingEditor: () => void; // New prop to signal closing the editor
 }
 
-const BookingManagement: React.FC<BookingManagementProps> = ({ allBusinesses }) => {
+const BookingManagement: React.FC<BookingManagementProps> = ({ allBusinesses, allUsers, onViewUserProfile, onViewBusinessProfile, onEditBookingFromMgmt, onCloseBookingEditor }) => {
     const initialBookings = useMemo(() => {
-        if (allBusinesses.length === 0) return [];
+        if (allBusinesses.length === 0 || allUsers.length === 0) return [];
         return Array.from({ length: 6 }, () => {
             const randomBusiness = allBusinesses[Math.floor(Math.random() * allBusinesses.length)];
-            const clientName = `${getRandomFirstName()} ${getRandomLastName()}`;
+            const randomUser = allUsers[Math.floor(Math.random() * allUsers.length)];
+            const clientName = `${randomUser.firstName} ${randomUser.lastName}`;
             const serviceOptions = randomBusiness.serviceOffers?.map(s => s.title) || ['General Service'];
             const randomService = serviceOptions[Math.floor(Math.random() * serviceOptions.length)];
 
             return {
                 id: generateBookingId(randomBusiness.id),
                 businessId: randomBusiness.id,
+                clientId: randomUser.id, // Assign actual client ID
                 client: clientName,
                 business: randomBusiness.name,
                 city: randomBusiness.city,
@@ -3478,33 +3403,27 @@ const BookingManagement: React.FC<BookingManagementProps> = ({ allBusinesses }) 
                 status: ['Confirmed', 'Pending', 'Completed', 'Cancelled', 'No-show'][Math.floor(Math.random() * 5)] as Booking['status'],
             };
         });
-    }, [allBusinesses]);
+    }, [allBusinesses, allUsers]); // Depend on allUsers as well
 
     const [bookings, setBookings] = useState<Booking[]>(initialBookings);
-    const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
-    const [isEditBookingModalOpen, setIsEditBookingModalOpen] = useState(false);
+    // Removed selectedBooking and isEditBookingModalOpen from here, moved to App component
 
     const handleEditBooking = (booking: Booking) => {
-        setSelectedBooking(booking);
-        setIsEditBookingModalOpen(true);
-    };
-
-    const handleCloseBookingEditor = () => {
-        setSelectedBooking(null);
-        setIsEditBookingModalOpen(false);
+        onEditBookingFromMgmt(booking); // Pass the selected booking up to App
     };
 
     const handleSaveBooking = (updatedBooking: Booking) => {
         setBookings(prev => prev.map(b => (b.id === updatedBooking.id ? updatedBooking : b)));
-        handleCloseBookingEditor();
+        onCloseBookingEditor(); // Signal App to close the editor
         alert(`Booking ${updatedBooking.id} updated successfully!`);
     };
 
     const handleCancelBookingAction = (bookingId: string) => {
         if (window.confirm(`Are you sure you want to cancel booking ${bookingId}?`)) {
             setBookings(prev => prev.map(b => (b.id === bookingId ? { ...b, status: 'Cancelled' } : b)));
-            setSelectedBooking(prev => prev ? { ...prev, status: 'Cancelled' } : null); // Update selected booking state
+            // Note: selectedBooking state in App will need to be updated too if it's the same booking
             alert(`Booking ${bookingId} has been cancelled.`);
+            onCloseBookingEditor(); // Close editor after action
         }
     };
 
@@ -3512,25 +3431,11 @@ const BookingManagement: React.FC<BookingManagementProps> = ({ allBusinesses }) 
         if (window.confirm(`Are you sure you want to issue a refund for booking ${bookingId}?`)) {
             // In a real app, this would trigger an actual refund process
             alert(`Refund initiated for booking ${bookingId}! (Placeholder)`);
-            // Optionally, update status or add a refund status
-            // setBookings(prev => prev.map(b => (b.id === bookingId ? { ...b, status: 'Refunded' } : b)));
-            handleCloseBookingEditor();
+            onCloseBookingEditor(); // Close editor after action
         }
     };
 
-
-    if (isEditBookingModalOpen && selectedBooking) {
-        return (
-            <BookingEditor
-                booking={selectedBooking}
-                onClose={handleCloseBookingEditor}
-                onSave={handleSaveBooking}
-                onCancelBooking={handleCancelBookingAction}
-                onRefundBooking={handleRefundBookingAction}
-            />
-        );
-    }
-
+    // The BookingEditor is now rendered by App, so no conditional rendering here
     return (
         <div>
             {/* <SectionTitle title="📅 Booking Management" description="View, create, modify, and resolve conflicts for appointments." /> */}
@@ -3800,6 +3705,7 @@ const SupportIssueResolution: React.FC = () => (
                         <td style={{ padding: '8px' }}>Booking 123 (Client A)</td>
                         <td style={{ padding: '8px' }}>Client wants to reschedule</td>
                         <td style={{ padding: '8px' }}>New</td>
+                        {/* Fix: Added closing curly brace for style */}
                         <td style={{ padding: '8px' }}>
                             <button style={{ marginRight: '5px' }} aria-label="View issue details">View Details</button>
                             <button className="btn-secondary" aria-label="Assign issue">Assign</button>
@@ -3857,11 +3763,350 @@ const DeveloperMaintenanceTools: React.FC = () => (
     </div>
 );
 
+// --- New Admin Credentials Editor Component ---
+interface AdminCredentials {
+    username: string;
+    email: string;
+}
+
+interface AdminCredentialsEditorProps {
+    adminCredentials: AdminCredentials;
+    adminPassword: string; // Plain password for mock comparison in demo
+    onUpdateLogin: (newUsername: string, newEmail: string) => void;
+    onUpdatePassword: (currentPass: string, newPass: string) => void;
+    onResetPasswordRequest: (email: string) => void;
+    onBack: () => void;
+}
+
+const AdminCredentialsEditor: React.FC<AdminCredentialsEditorProps> = ({ adminCredentials, adminPassword, onUpdateLogin, onUpdatePassword, onResetPasswordRequest, onBack }) => {
+    const [newUsername, setNewUsername] = useState(adminCredentials.username);
+    const [newEmail, setNewEmail] = useState(adminCredentials.email);
+    const [currentPassword, setCurrentPassword] = useState('');
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmNewPassword, setConfirmNewPassword] = useState('');
+    const [loginError, setLoginError] = useState('');
+    const [passwordError, setPasswordError] = useState('');
+
+
+    const handleUpdateLoginSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoginError('');
+        if (!newUsername.trim() || !newEmail.trim()) {
+            setLoginError('Username and Email cannot be empty.');
+            return;
+        }
+        onUpdateLogin(newUsername, newEmail);
+    };
+
+    const handleUpdatePasswordSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        setPasswordError('');
+        if (!currentPassword || !newPassword || !confirmNewPassword) {
+            setPasswordError('All password fields are required.');
+            return;
+        }
+        if (currentPassword !== adminPassword) { // Mock verification against current admin password
+            setPasswordError('Incorrect current password.');
+            return;
+        }
+        if (newPassword !== confirmNewPassword) {
+            setPasswordError('New password and confirmation do not match.');
+            return;
+        }
+        if (newPassword === currentPassword) {
+            setPasswordError('New password cannot be the same as the current password.');
+            return;
+        }
+        onUpdatePassword(currentPassword, newPassword);
+        setCurrentPassword('');
+        setNewPassword('');
+        setConfirmNewPassword('');
+    };
+
+    return (
+        <div style={{ padding: '20px' }}>
+            <h4 style={{ marginTop: 0, marginBottom: '25px', textAlign: 'center', color: 'var(--text-color)' }}>Admin Login Credentials</h4>
+
+            {/* Change Login */}
+            <Card title="Change Login Identifier" style={{ marginBottom: '25px' }}>
+                <form onSubmit={handleUpdateLoginSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                    <div>
+                        <label htmlFor="adminUsername" style={{ display: 'block', marginBottom: '3px', fontSize: '0.9em', color: 'var(--text-color-light-gray)' }}>Username:</label>
+                        <input type="text" id="adminUsername" value={newUsername} onChange={(e) => setNewUsername(e.target.value)} style={{ width: '100%' }} aria-label="Admin username" />
+                    </div>
+                    <div>
+                        <label htmlFor="adminEmail" style={{ display: 'block', marginBottom: '3px', fontSize: '0.9em', color: 'var(--text-color-light-gray)' }}>Email:</label>
+                        <input type="email" id="adminEmail" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} style={{ width: '100%' }} aria-label="Admin email" />
+                    </div>
+                    {loginError && <p style={{ color: 'var(--danger-color)', margin: '0' }}>{loginError}</p>}
+                    <button type="submit" aria-label="Update admin login details">Update Login</button>
+                </form>
+            </Card>
+
+            {/* Change Password */}
+            <Card title="Change Password" style={{ marginBottom: '25px' }}>
+                <form onSubmit={handleUpdatePasswordSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                    <div>
+                        <label htmlFor="currentPassword" style={{ display: 'block', marginBottom: '3px', fontSize: '0.9em', color: 'var(--text-color-light-gray)' }}>Current Password:</label>
+                        <input type="password" id="currentPassword" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} style={{ width: '100%' }} aria-label="Current password" />
+                    </div>
+                    <div>
+                        <label htmlFor="newAdminPassword" style={{ display: 'block', marginBottom: '3px', fontSize: '0.9em', color: 'var(--text-color-light-gray)' }}>New Password:</label>
+                        <input type="password" id="newAdminPassword" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} style={{ width: '100%' }} aria-label="New password" />
+                    </div>
+                    <div>
+                        <label htmlFor="confirmNewAdminPassword" style={{ display: 'block', marginBottom: '3px', fontSize: '0.9em', color: 'var(--text-color-light-gray)' }}>Confirm New Password:</label>
+                        <input type="password" id="confirmNewAdminPassword" value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)} style={{ width: '100%' }} aria-label="Confirm new password" />
+                    </div>
+                    {passwordError && <p style={{ color: 'var(--danger-color)', margin: '0' }}>{passwordError}</p>}
+                    <button type="submit" aria-label="Change admin password">Change Password</button>
+                </form>
+            </Card>
+
+            {/* Password Reset */}
+            <Card title="Request Password Reset">
+                <p style={{ opacity: 0.8, marginBottom: '20px' }}>
+                    If you forget your password, you can request a reset link to be sent to your registered email.
+                </p>
+                <button
+                    className="btn-secondary"
+                    onClick={() => onResetPasswordRequest(adminCredentials.email)}
+                    aria-label="Request password reset via email"
+                    style={{ width: '100%' }}
+                >
+                    Send Password Reset Email
+                </button>
+            </Card>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '30px' }}>
+                <button className="btn-secondary" onClick={onBack} aria-label="Go back to settings main menu">Go Back</button>
+            </div>
+        </div>
+    );
+};
+
+// --- New Settings Modal Component ---
+interface SettingsModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    isDarkMode: boolean;
+    onToggleDarkMode: () => void;
+    adminCredentials: AdminCredentials;
+    adminPassword: string; // Pass for verification
+    onUpdateAdminLogin: (newUsername: string, newEmail: string) => void;
+    onUpdateAdminPassword: (currentPass: string, newPass: string) => void;
+    onResetAdminPasswordRequest: (email: string) => void;
+}
+
+const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, isDarkMode, onToggleDarkMode, adminCredentials, adminPassword, onUpdateAdminLogin, onUpdateAdminPassword, onResetAdminPasswordRequest }) => {
+    const [currentSettingsView, setCurrentSettingsView] = useState<'main' | 'adminCredentials'>('main');
+
+    useEffect(() => {
+        if (!isOpen) {
+            setCurrentSettingsView('main'); // Reset view when modal closes
+        }
+    }, [isOpen]);
+
+    if (!isOpen) return null;
+
+    const handleBackToMainSettings = () => {
+        setCurrentSettingsView('main');
+    };
+
+    return (
+        <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.6)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1001,
+            backdropFilter: 'blur(2px)'
+        }} onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+            <Card style={{
+                width: '90%',
+                maxWidth: '600px',
+                padding: '0', // Remove internal padding as sub-components have it
+                maxHeight: '80vh', // Limit height for scrollability
+                overflowY: 'auto',
+                position: 'relative',
+            }}>
+                <button
+                    onClick={onClose}
+                    style={{
+                        position: 'absolute',
+                        top: '15px',
+                        right: '15px',
+                        background: 'none',
+                        border: 'none',
+                        fontSize: '1.5em',
+                        color: 'var(--text-color-light-gray)',
+                        cursor: 'pointer',
+                        padding: '5px',
+                        lineHeight: '1',
+                        zIndex: 10,
+                    }}
+                    aria-label="Close settings"
+                >
+                    &times;
+                </button>
+                {currentSettingsView === 'main' && (
+                    <div style={{ padding: '30px' }}>
+                        <h3 style={{ marginTop: 0, marginBottom: '25px', color: 'var(--text-color)' }}>Settings</h3>
+                        <div style={{ marginBottom: '20px' }}>
+                            <h5 style={{ marginBottom: '10px', color: 'var(--primary-color)' }}>Appearance</h5>
+                            <button onClick={onToggleDarkMode} style={{
+                                width: '100%',
+                                background: 'none',
+                                border: '1px solid var(--border-color)',
+                                color: 'var(--text-color)',
+                                padding: '12px 15px', // Slightly larger padding
+                                cursor: 'pointer',
+                                borderRadius: '4px',
+                                fontSize: '1.1em', // Slightly larger font
+                                transition: 'background-color 0.2s, border-color 0.2s',
+                                textAlign: 'left',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                            }}>
+                                <span>{isDarkMode ? '☀️ Light Mode' : '🌙 Dark Mode'}</span>
+                                <span style={{ opacity: 0.7, fontSize: '0.9em' }}>Toggle theme</span>
+                            </button>
+                        </div>
+                        <div style={{ marginBottom: '20px' }}>
+                            <h5 style={{ marginBottom: '10px', color: 'var(--primary-color)' }}>Account</h5>
+                            <button onClick={() => setCurrentSettingsView('adminCredentials')} style={{
+                                width: '100%',
+                                background: 'none',
+                                border: '1px solid var(--border-color)',
+                                color: 'var(--text-color)',
+                                padding: '12px 15px', // Slightly larger padding
+                                cursor: 'pointer',
+                                borderRadius: '4px',
+                                fontSize: '1.1em', // Slightly larger font
+                                transition: 'background-color 0.2s, border-color 0.2s',
+                                textAlign: 'left',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                            }}>
+                                <span>Admin Login Credentials</span>
+                                <span style={{ opacity: 0.7, fontSize: '0.9em' }}>Change login & password &rarr;</span>
+                            </button>
+                        </div>
+                    </div>
+                )}
+                {currentSettingsView === 'adminCredentials' && (
+                    <AdminCredentialsEditor
+                        adminCredentials={adminCredentials}
+                        adminPassword={adminPassword} // Pass for verification
+                        onUpdateLogin={onUpdateAdminLogin}
+                        onUpdatePassword={onUpdateAdminPassword}
+                        onResetPasswordRequest={onResetAdminPasswordRequest}
+                        onBack={handleBackToMainSettings}
+                    />
+                )}
+            </Card>
+        </div>
+    );
+};
+
+interface LoginScreenProps {
+    onLogin: (username: string, password: string) => void;
+    loginError: string | null;
+}
+
+const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, loginError }) => {
+    const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        onLogin(username, password);
+    };
+
+    return (
+        <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            minHeight: '100vh',
+            width: '100%',
+            backgroundColor: 'var(--background-color)',
+            color: 'var(--text-color)',
+        }}>
+            <Card style={{
+                width: '90%',
+                maxWidth: '400px',
+                padding: '40px',
+                textAlign: 'center',
+            }}>
+                <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginBottom: '20px',
+                    color: 'var(--sidebar-text)',
+                    backgroundColor: 'var(--primary-color)',
+                    borderRadius: '8px',
+                    padding: '10px',
+                }}>
+                    <span style={{ fontSize: '2.5em', fontWeight: 'bold', marginRight: '10px' }}>R</span>
+                    <div>
+                        <div style={{ fontSize: '1.4em', fontWeight: 'bold', lineHeight: '1.2' }}>Rejaly.uz</div>
+                        <div style={{ fontSize: '0.9em', opacity: 0.8 }}>Admin Panel</div>
+                    </div>
+                </div>
+                <h3 style={{ marginTop: 0, marginBottom: '30px', color: 'var(--text-color)' }}>Admin Login</h3>
+                <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                    <div>
+                        <label htmlFor="loginUsername" style={{ display: 'block', marginBottom: '5px', fontSize: '0.9em', color: 'var(--text-color-light-gray)' }}>Username or Email:</label>
+                        <input
+                            type="text"
+                            id="loginUsername"
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)}
+                            style={{ width: '100%' }}
+                            placeholder="admin@rejaly.uz"
+                            aria-label="Username or Email"
+                            required
+                        />
+                    </div>
+                    <div>
+                        <label htmlFor="loginPassword" style={{ display: 'block', marginBottom: '5px', fontSize: '0.9em', color: 'var(--text-color-light-gray)' }}>Password:</label>
+                        <input
+                            type="password"
+                            id="loginPassword"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            style={{ width: '100%' }}
+                            placeholder="password123"
+                            aria-label="Password"
+                            required
+                        />
+                    </div>
+                    {loginError && (
+                        <p style={{ color: 'var(--danger-color)', margin: '-10px 0 0', fontSize: '0.9em' }}>{loginError}</p>
+                    )}
+                    <button type="submit" style={{ marginTop: '10px' }} aria-label="Login">Login</button>
+                </form>
+            </Card>
+        </div>
+    );
+};
+
+
 // --- Main App Component ---
 
 const App: React.FC = () => {
     const [activeSection, setActiveSection] = useState<string>('user-management');
     const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
+    const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false); // New login state
 
     // Master list of users and businesses, managed by App
     const initialUsersData: User[] = useMemo(() => Array.from({ length: 6 }, generateRandomUser), []);
@@ -3880,19 +4125,34 @@ const App: React.FC = () => {
     // State for handling sub-views within User Management
     const [userSubView, setUserSubView] = useState<'list' | 'editProfile' | 'viewActivity' | 'resetPassword'>('list');
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
+    const [userNavOrigin, setUserNavOrigin] = useState<'userManagement' | 'bookingManagement' | null>(null); // New: Tracks if user editor was opened from BookingManagement
 
     // State for handling sub-views within Business Management
     const [businessSubView, setBusinessSubView] = useState<'list' | 'editProfile' | 'manageStaff' | 'viewActivity' | 'resetPassword' | 'manageServiceOffers' | 'manageClients' | 'managePortfolio' | 'viewReviews'>('list');
     const [selectedBusiness, setSelectedBusiness] = useState<Business | null>(null);
+    const [businessNavOrigin, setBusinessNavOrigin] = useState<'businessManagement' | 'bookingManagement' | null>(null); // New: Tracks if business editor was opened from BookingManagement
+
+    // State for managing the BookingEditor when active
+    const [selectedBookingForEdit, setSelectedBookingForEdit] = useState<Booking | null>(null);
+
+    // State for Settings Modal
+    const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+    const [adminCredentials, setAdminCredentials] = useState<AdminCredentials>({
+        username: 'admin',
+        email: 'admin@rejaly.uz',
+    });
+    const [adminPassword, setAdminPassword] = useState<string>('password123'); // Mock admin password for demo
+    const [loginError, setLoginError] = useState<string | null>(null);
+
 
     const sectionNames: { [key: string]: string } = {
         'user-management': '🧍‍♂️ User Management',
         'business-management': '💈 Business Management', // Updated title
         'booking-management': '📅 Booking Management',
-        'payments-transactions': '💰 Payments & Transactions',
+        'notifications-communication': '⚡ Notifications & Communication', // Updated title
         'reviews-ratings-reports': '💬 Reviews, Ratings, and Reports',
         'analytics-dashboard': '📊 Analytics Dashboard',
-        'notifications-communication': '⚡ Notifications & Communication',
+        'payments-transactions': '💰 Payments & Transactions', // Updated title
         'platform-configuration': '🧱 Platform Configuration',
         'support-issue-resolution': '🚨 Support & Issue Resolution',
         'developer-maintenance': '🧰 Developer & Maintenance Tools',
@@ -3923,25 +4183,85 @@ const App: React.FC = () => {
         });
     };
 
+    const handleLogin = (usernameInput: string, passwordInput: string) => {
+        setLoginError(null);
+        if (usernameInput === adminCredentials.email && passwordInput === adminPassword) {
+            setIsLoggedIn(true);
+            setActiveSection('user-management'); // Redirect to a default section after login
+        } else {
+            setLoginError('Invalid username/email or password.');
+        }
+    };
+
+    const handleLogout = () => {
+        setIsLoggedIn(false);
+        setLoginError(null);
+        setActiveSection('user-management'); // Reset active section
+    };
+
+    const handleOpenSettings = () => {
+        setIsSettingsModalOpen(true);
+    };
+
+    const handleCloseSettings = () => {
+        setIsSettingsModalOpen(false);
+    };
+
+    const handleUpdateAdminLogin = (newUsername: string, newEmail: string) => {
+        setAdminCredentials({ username: newUsername, email: newEmail });
+        alert('Admin login details updated successfully! (Placeholder)');
+        handleCloseSettings();
+    };
+
+    const handleUpdateAdminPassword = (currentPass: string, newPass: string) => {
+        // In a real app, verify currentPass against a stored hash
+        if (currentPass === adminPassword) { // Mock check
+            setAdminPassword(newPass); // Update mock password
+            alert('Admin password updated successfully! (Placeholder)');
+            handleCloseSettings();
+        } else {
+            alert('Incorrect current password.');
+        }
+    };
+
+    const handleResetAdminPasswordRequest = (email: string) => {
+        alert(`Password reset link sent to admin email: ${email}! (Placeholder)`);
+        handleCloseSettings();
+    };
+
+
     // --- User Management Callbacks ---
-    const handleSelectUserForEdit = (user: User) => {
+    const handleSelectUserForEdit = (user: User, origin: 'userManagement' | 'bookingManagement' = 'userManagement') => {
         setSelectedUser(user);
         setUserSubView('editProfile');
-        // setActiveSection('user-management'); // Ensure correct section is active (already handled by renderContent logic)
+        // Only change active section if it's not already on 'user-management' and not from booking context
+        setActiveSection(origin === 'bookingManagement' ? activeSection : 'user-management'); // Visually stay in booking context if originated from there
+        setUserNavOrigin(origin);
     };
-    const handleViewUserActivity = (user: User) => {
+    const handleViewUserActivity = (user: User, origin: 'userManagement' | 'bookingManagement' = 'userManagement') => {
         setSelectedUser(user);
         setUserSubView('viewActivity');
-        // setActiveSection('user-management');
+        setActiveSection(origin === 'bookingManagement' ? activeSection : 'user-management');
+        setUserNavOrigin(origin);
     };
-    const handleResetUserPassword = (user: User) => {
+    const handleResetUserPassword = (user: User, origin: 'userManagement' | 'bookingManagement' = 'userManagement') => {
         setSelectedUser(user);
         setUserSubView('resetPassword');
-        // setActiveSection('user-management');
+        setActiveSection(origin === 'bookingManagement' ? activeSection : 'user-management');
+        setUserNavOrigin(origin);
     };
+
     const handleUserSubViewClose = () => {
+        if (userNavOrigin === 'bookingManagement') {
+            // If originated from booking, we need to show the BookingEditor again
+            // selectedBookingForEdit should still be set to re-render BookingEditor
+            setActiveSection('booking-management');
+        } else {
+            setActiveSection('user-management'); // Return to user management list
+        }
         setSelectedUser(null);
         setUserSubView('list');
+        setUserNavOrigin(null); // Clear origin
     };
 
     const handleUserPhotoUpload = (file: File, userId: string) => {
@@ -3954,45 +4274,60 @@ const App: React.FC = () => {
     };
 
     // --- Business Management Callbacks ---
-    const handleSelectBusinessForEdit = (business: Business) => {
+    const handleSelectBusinessForEdit = (business: Business, origin: 'businessManagement' | 'bookingManagement' = 'businessManagement') => {
         setSelectedBusiness(business);
         setBusinessSubView('editProfile');
-        // setActiveSection('business-management'); // Already handled
+        setActiveSection(origin === 'bookingManagement' ? activeSection : 'business-management'); // Visually stay in booking context
+        setBusinessNavOrigin(origin);
     };
     const handleManageBusinessStaff = (business: Business) => {
         setSelectedBusiness(business);
         setBusinessSubView('manageStaff');
-        // setActiveSection('business-management');
+        setActiveSection('business-management');
     };
-    const handleViewBusinessActivity = (business: Business) => {
+    const handleViewBusinessActivity = (business: Business, origin: 'businessManagement' | 'bookingManagement' = 'businessManagement') => {
         setSelectedBusiness(business);
         setBusinessSubView('viewActivity');
-        // setActiveSection('business-management');
+        setActiveSection(origin === 'bookingManagement' ? activeSection : 'business-management');
+        setBusinessNavOrigin(origin);
     };
-    const handleResetBusinessPassword = (business: Business) => {
+    const handleResetBusinessPassword = (business: Business, origin: 'businessManagement' | 'bookingManagement' = 'businessManagement') => {
         setSelectedBusiness(business);
         setBusinessSubView('resetPassword');
-        // setActiveSection('business-management');
+        setActiveSection(origin === 'bookingManagement' ? activeSection : 'business-management');
+        setBusinessNavOrigin(origin);
     };
     const handleManageBusinessServiceOffers = (business: Business) => {
         setSelectedBusiness(business);
         setBusinessSubView('manageServiceOffers');
+        setActiveSection('business-management');
     };
     const handleManageBusinessClients = (business: Business) => { // New handler
         setSelectedBusiness(business);
         setBusinessSubView('manageClients');
+        setActiveSection('business-management');
     };
     const handleManageBusinessPortfolio = (business: Business) => { // New handler
         setSelectedBusiness(business);
         setBusinessSubView('managePortfolio');
+        setActiveSection('business-management');
     };
     const handleViewBusinessReviews = (business: Business) => { // New handler
         setSelectedBusiness(business);
         setBusinessSubView('viewReviews');
+        setActiveSection('business-management');
     };
     const handleBusinessSubViewClose = () => {
+        if (businessNavOrigin === 'bookingManagement') {
+            // If originated from booking, we need to show the BookingEditor again
+            // selectedBookingForEdit should still be set to re-render BookingEditor
+            setActiveSection('booking-management');
+        } else {
+            setActiveSection('business-management'); // Return to business management list
+        }
         setSelectedBusiness(null);
         setBusinessSubView('list');
+        setBusinessNavOrigin(null); // Clear origin
     };
 
     const handleBusinessCoverPhotoUpload = (file: File, businessId: string) => {
@@ -4041,14 +4376,15 @@ const App: React.FC = () => {
         reader.readAsDataURL(file);
     };
 
-    const isSubViewActive = (section: string) => {
-        if (section === 'user-management') {
-            return userSubView !== 'list';
-        }
-        if (section === 'business-management') {
-            return businessSubView !== 'list';
-        }
-        return false;
+    // --- Booking Management Callbacks ---
+    const handleEditBookingFromMgmt = (booking: Booking) => {
+        setSelectedBookingForEdit(booking);
+        setActiveSection('booking-management'); // Keep active section as booking management
+    };
+
+    const handleCloseBookingEditor = () => {
+        setSelectedBookingForEdit(null);
+        setActiveSection('booking-management'); // Ensure we return to the booking list
     };
 
     const getHeaderTitleAndGoBack = () => {
@@ -4056,17 +4392,31 @@ const App: React.FC = () => {
         let onGoBack = undefined;
         let showBackButton = false;
 
-        if (activeSection === 'user-management' && userSubView !== 'list') {
+        if (!isLoggedIn) {
+            // No header or back button on login screen
+            return { titleOverride: undefined, onGoBack: undefined, showBackButton: false };
+        }
+
+        // Logic for Settings Modal
+        if (isSettingsModalOpen) {
             showBackButton = true;
-            onGoBack = handleUserSubViewClose;
+            onGoBack = handleCloseSettings;
+            titleOverride = 'Settings'; // Or 'Admin Credentials' if deep-linked, but for now, general settings
+        }
+        // Logic for User Profile Editor
+        else if (selectedUser && userSubView !== 'list' && (activeSection === 'user-management' || userNavOrigin === 'bookingManagement')) {
+            showBackButton = true;
+            onGoBack = handleUserSubViewClose; // This now smartly navigates back
             switch (userSubView) {
                 case 'editProfile': titleOverride = 'Edit User Profile'; break;
                 case 'viewActivity': titleOverride = 'User Activity History'; break;
                 case 'resetPassword': titleOverride = 'Reset User Password'; break;
             }
-        } else if (activeSection === 'business-management' && businessSubView !== 'list') {
+        }
+        // Logic for Business Profile Editor
+        else if (selectedBusiness && businessSubView !== 'list' && (activeSection === 'business-management' || businessNavOrigin === 'bookingManagement')) {
             showBackButton = true;
-            onGoBack = handleBusinessSubViewClose;
+            onGoBack = handleBusinessSubViewClose; // This now smartly navigates back
             switch (businessSubView) {
                 case 'editProfile': titleOverride = 'Edit Business Profile'; break;
                 case 'manageStaff': titleOverride = 'Manage Business Staff'; break; // Simplified title
@@ -4078,6 +4428,12 @@ const App: React.FC = () => {
                 case 'viewReviews': titleOverride = 'View Business Reviews'; break; // New title
             }
         }
+        // Logic for Booking Editor
+        else if (selectedBookingForEdit) {
+            showBackButton = true;
+            onGoBack = handleCloseBookingEditor; // Go back to the booking list within BookingManagement
+            titleOverride = `Edit Booking: ${selectedBookingForEdit.id}`;
+        }
         return { titleOverride, onGoBack, showBackButton };
     };
 
@@ -4085,139 +4441,197 @@ const App: React.FC = () => {
 
 
     const renderContent = () => {
+        if (!isLoggedIn) {
+            return <LoginScreen onLogin={handleLogin} loginError={loginError} />;
+        }
+
+        // Prioritize showing UserProfileEditor if active
+        if (selectedUser && userSubView !== 'list') {
+            if (userSubView === 'editProfile') {
+                return (
+                    <UserProfileEditor
+                        user={selectedUser}
+                        onClose={handleUserSubViewClose}
+                        onSave={(updatedUser) => {
+                            setAllUsers(prevUsers => prevUsers.map(u => u.id === updatedUser.id ? updatedUser : u));
+                            setSelectedUser(updatedUser);
+                            handleUserSubViewClose();
+                        }}
+                        uniqueCities={Array.from(new Set(allUsers.map(u => u.city))).sort()}
+                        uniqueGenders={GENDER_OPTIONS}
+                        onViewActivity={(user) => handleViewUserActivity(user, userNavOrigin || 'userManagement')} // Pass current origin
+                        onResetPassword={(user) => handleResetUserPassword(user, userNavOrigin || 'userManagement')} // Pass current origin
+                        onUploadProfilePhoto={handleUserPhotoUpload}
+                    />
+                );
+            } else if (userSubView === 'viewActivity') {
+                return <UserActivityViewer user={selectedUser} onClose={handleUserSubViewClose} />;
+            } else if (userSubView === 'resetPassword') {
+                return <UserPasswordReset user={selectedUser} onClose={handleUserSubViewClose} />;
+            }
+        }
+        // Prioritize showing BusinessProfileEditor if active
+        if (selectedBusiness && businessSubView !== 'list') {
+            if (businessSubView === 'editProfile') {
+                return (
+                    <BusinessProfileEditor
+                        business={selectedBusiness}
+                        onClose={handleBusinessSubViewClose}
+                        onSave={(updatedBusiness) => {
+                            setAllBusinesses(prevBusinesses => prevBusinesses.map(b => b.id === updatedBusiness.id ? updatedBusiness : b));
+                            setSelectedBusiness(updatedBusiness);
+                            handleBusinessSubViewClose();
+                        }}
+                        uniqueCities={Array.from(new Set(allBusinesses.map(b => b.city))).sort()}
+                        uniqueActivities={businessActivities.filter(a => a !== 'All')}
+                        onViewStaff={handleManageBusinessStaff}
+                        onViewActivity={(business) => handleViewBusinessActivity(business, businessNavOrigin || 'businessManagement')} // Pass current origin
+                        onResetPassword={(business) => handleResetBusinessPassword(business, businessNavOrigin || 'businessManagement')} // Pass current origin
+                        onUploadCoverPhoto={handleBusinessCoverPhotoUpload}
+                        onManageServiceOffers={handleManageBusinessServiceOffers}
+                        onManageClients={handleManageBusinessClients}
+                        onManagePortfolio={handleManageBusinessPortfolio}
+                        onViewReviews={handleViewBusinessReviews}
+                    />
+                );
+            } else if (businessSubView === 'manageStaff') {
+                return (
+                    <BusinessStaffManager
+                        business={selectedBusiness}
+                        onClose={handleBusinessSubViewClose}
+                        onSaveStaff={handleSaveBusinessStaff}
+                        onUploadStaffMedia={handleBusinessStaffPhotoUpload}
+                    />
+                );
+            } else if (businessSubView === 'viewActivity') {
+                return <BusinessActivityViewer business={selectedBusiness} onClose={handleBusinessSubViewClose} />;
+            } else if (businessSubView === 'resetPassword') {
+                return <BusinessPasswordReset business={selectedBusiness} onClose={handleBusinessSubViewClose} />;
+            } else if (businessSubView === 'manageServiceOffers') {
+                return (
+                    <BusinessServiceOffersManager
+                        business={selectedBusiness}
+                        onClose={handleBusinessSubViewClose}
+                        onSaveOffers={(updatedOffers) => {
+                            setAllBusinesses(prevBusinesses => prevBusinesses.map(b => b.id === selectedBusiness.id ? { ...b, serviceOffers: updatedOffers } : b));
+                            setSelectedBusiness(prev => prev ? { ...prev, serviceOffers: updatedOffers } : null);
+                        }}
+                    />
+                );
+            } else if (businessSubView === 'manageClients') {
+                return (
+                    <BusinessClientManager
+                        business={selectedBusiness}
+                        onClose={handleBusinessSubViewClose}
+                        onSaveClients={(updatedClients) => {
+                            setAllBusinesses(prevBusinesses => prevBusinesses.map(b => b.id === selectedBusiness.id ? { ...b, clients: updatedClients } : b));
+                            setSelectedBusiness(prev => prev ? { ...prev, clients: updatedClients } : null);
+                        }}
+                    />
+                );
+            } else if (businessSubView === 'managePortfolio') {
+                return (
+                    <BusinessPortfolioManager
+                        business={selectedBusiness}
+                        onClose={handleBusinessSubViewClose}
+                        onSavePortfolio={(updatedPortfolio) => {
+                            setAllBusinesses(prevBusinesses => prevBusinesses.map(b => b.id === selectedBusiness.id ? { ...b, portfolio: updatedPortfolio } : b));
+                            setSelectedBusiness(prev => prev ? { ...prev, portfolio: updatedPortfolio } : null);
+                        }}
+                    />
+                );
+            } else if (businessSubView === 'viewReviews') {
+                return (
+                    <BusinessReviewsViewer
+                        business={selectedBusiness}
+                        onClose={handleBusinessSubViewClose}
+                        onSaveReviews={(updatedReviews) => {
+                            setAllBusinesses(prevBusinesses => prevBusinesses.map(b => b.id === selectedBusiness.id ? { ...b, customerReviews: updatedReviews } : b));
+                            setSelectedBusiness(prev => prev ? { ...prev, customerReviews: updatedReviews } : null);
+                        }}
+                    />
+                );
+            }
+        }
+
+        // Render BookingEditor if a booking is selected for edit
+        if (selectedBookingForEdit) {
+            return (
+                <BookingEditor
+                    booking={selectedBookingForEdit}
+                    onClose={handleCloseBookingEditor}
+                    onSave={(updatedBooking) => {
+                        // This save should update the bookings list in BookingManagement
+                        // and then close the editor.
+                        // For now, let's just close the editor and rely on BookingManagement's internal update
+                        // In a real app, BookingManagement would need to receive `setBookings` prop or similar.
+                        setAllBusinesses(prev => prev.map(biz => {
+                            if (biz.id === updatedBooking.businessId && biz.clients) {
+                                return {
+                                    ...biz,
+                                    clients: biz.clients.map(client => client.id === updatedBooking.clientId ? { ...client, lastVisitDate: updatedBooking.date, upcomingVisitDate: updatedBooking.status === 'Confirmed' ? updatedBooking.date : client.upcomingVisitDate } : client)
+                                };
+                            }
+                            return biz;
+                        }));
+                        handleCloseBookingEditor();
+                    }}
+                    onCancelBooking={(bookingId) => {
+                        // This would typically update the booking status in the list
+                        // For now, just close the editor.
+                        alert(`Booking ${bookingId} has been cancelled. (Placeholder)`);
+                        handleCloseBookingEditor();
+                    }}
+                    onRefundBooking={(bookingId) => {
+                        alert(`Refund initiated for booking ${bookingId}! (Placeholder)`);
+                        handleCloseBookingEditor();
+                    }}
+                    onViewUserProfile={handleSelectUserForEdit}
+                    onViewBusinessProfile={handleSelectBusinessForEdit}
+                    allUsers={allUsers}
+                    allBusinesses={allBusinesses}
+                />
+            );
+        }
+
+        // Render based on activeSection if no specific sub-view is overriding
         switch (activeSection) {
             case 'user-management':
-                if (userSubView === 'editProfile' && selectedUser) {
-                    return (
-                        <UserProfileEditor
-                            user={selectedUser}
-                            onClose={handleUserSubViewClose}
-                            onSave={(updatedUser) => {
-                                setAllUsers(prevUsers => prevUsers.map(u => u.id === updatedUser.id ? updatedUser : u));
-                                setSelectedUser(updatedUser); // Update selected user in state to reflect changes if staying on page
-                                handleUserSubViewClose();
-                            }}
-                            uniqueCities={Array.from(new Set(allUsers.map(u => u.city))).sort()}
-                            uniqueGenders={GENDER_OPTIONS}
-                            onViewActivity={handleViewUserActivity}
-                            onResetPassword={handleResetUserPassword}
-                            onUploadProfilePhoto={handleUserPhotoUpload} // Pass the new handler
-                        />
-                    );
-                } else if (userSubView === 'viewActivity' && selectedUser) {
-                    return <UserActivityViewer user={selectedUser} onClose={handleUserSubViewClose} />;
-                } else if (userSubView === 'resetPassword' && selectedUser) {
-                    return <UserPasswordReset user={selectedUser} onClose={handleUserSubViewClose} />;
-                } else {
-                    return (
-                        <UserManagement
-                            users={allUsers}
-                            setUsers={setAllUsers}
-                            onEditUser={handleSelectUserForEdit}
-                            onViewActivity={handleViewUserActivity}
-                            onResetPassword={handleResetUserPassword}
-                        />
-                    );
-                }
+                return (
+                    <UserManagement
+                        users={allUsers}
+                        setUsers={setAllUsers}
+                        onEditUser={handleSelectUserForEdit}
+                        onViewActivity={handleViewUserActivity}
+                        onResetPassword={handleResetUserPassword}
+                    />
+                );
             case 'business-management':
-                if (businessSubView === 'editProfile' && selectedBusiness) {
-                    return (
-                        <BusinessProfileEditor
-                            business={selectedBusiness}
-                            onClose={handleBusinessSubViewClose}
-                            onSave={(updatedBusiness) => {
-                                setAllBusinesses(prevBusinesses => prevBusinesses.map(b => b.id === updatedBusiness.id ? updatedBusiness : b));
-                                setSelectedBusiness(updatedBusiness); // Update selected business in state to reflect changes
-                                handleBusinessSubViewClose();
-                            }}
-                            uniqueCities={Array.from(new Set(allBusinesses.map(b => b.city))).sort()}
-                            uniqueActivities={businessActivities.filter(a => a !== 'All')}
-                            onViewStaff={handleManageBusinessStaff}
-                            onViewActivity={handleViewBusinessActivity}
-                            onResetPassword={handleResetBusinessPassword}
-                            onUploadCoverPhoto={handleBusinessCoverPhotoUpload} // Pass the new handler
-                            onManageServiceOffers={handleManageBusinessServiceOffers}
-                            onManageClients={handleManageBusinessClients} // Pass new callback
-                            onManagePortfolio={handleManageBusinessPortfolio} // Pass new callback
-                            onViewReviews={handleViewBusinessReviews} // Pass new callback
-                        />
-                    );
-                } else if (businessSubView === 'manageStaff' && selectedBusiness) {
-                    return (
-                        <BusinessStaffManager
-                            business={selectedBusiness}
-                            onClose={handleBusinessSubViewClose}
-                            onSaveStaff={handleSaveBusinessStaff} // Pass new save handler
-                            onUploadStaffMedia={handleBusinessStaffPhotoUpload} // Pass new upload handler
-                        />
-                    );
-                } else if (businessSubView === 'viewActivity' && selectedBusiness) {
-                    return <BusinessActivityViewer business={selectedBusiness} onClose={handleBusinessSubViewClose} />;
-                } else if (businessSubView === 'resetPassword' && selectedBusiness) {
-                    return <BusinessPasswordReset business={selectedBusiness} onClose={handleBusinessSubViewClose} />;
-                } else if (businessSubView === 'manageServiceOffers' && selectedBusiness) {
-                    return (
-                        <BusinessServiceOffersManager
-                            business={selectedBusiness}
-                            onClose={handleBusinessSubViewClose}
-                            onSaveOffers={(updatedOffers) => {
-                                setAllBusinesses(prevBusinesses => prevBusinesses.map(b => b.id === selectedBusiness.id ? { ...b, serviceOffers: updatedOffers } : b));
-                                setSelectedBusiness(prev => prev ? { ...prev, serviceOffers: updatedOffers } : null); // Update selected business in state
-                            }}
-                        />
-                    );
-                } else if (businessSubView === 'manageClients' && selectedBusiness) { // New condition
-                    return (
-                        <BusinessClientManager
-                            business={selectedBusiness}
-                            onClose={handleBusinessSubViewClose}
-                            onSaveClients={(updatedClients) => {
-                                setAllBusinesses(prevBusinesses => prevBusinesses.map(b => b.id === selectedBusiness.id ? { ...b, clients: updatedClients } : b));
-                                setSelectedBusiness(prev => prev ? { ...prev, clients: updatedClients } : null); // Update selected business in state
-                            }}
-                        />
-                    );
-                } else if (businessSubView === 'managePortfolio' && selectedBusiness) { // New condition
-                    return (
-                        <BusinessPortfolioManager
-                            business={selectedBusiness}
-                            onClose={handleBusinessSubViewClose}
-                            onSavePortfolio={(updatedPortfolio) => {
-                                setAllBusinesses(prevBusinesses => prevBusinesses.map(b => b.id === selectedBusiness.id ? { ...b, portfolio: updatedPortfolio } : b));
-                                setSelectedBusiness(prev => prev ? { ...prev, portfolio: updatedPortfolio } : null); // Update selected business in state
-                            }}
-                        />
-                    );
-                } else if (businessSubView === 'viewReviews' && selectedBusiness) { // New condition
-                    return (
-                        <BusinessReviewsViewer
-                            business={selectedBusiness}
-                            onClose={handleBusinessSubViewClose}
-                            onSaveReviews={(updatedReviews) => {
-                                setAllBusinesses(prevBusinesses => prevBusinesses.map(b => b.id === selectedBusiness.id ? { ...b, customerReviews: updatedReviews } : b));
-                                setSelectedBusiness(prev => prev ? { ...prev, customerReviews: updatedReviews } : null); // Update selected business in state
-                            }}
-                        />
-                    );
-                }
-                else {
-                    return (
-                        <BusinessManagement
-                            businesses={allBusinesses}
-                            setBusinesses={setAllBusinesses}
-                            onEditBusiness={handleSelectBusinessForEdit}
-                            onManageStaff={handleManageBusinessStaff}
-                            onViewActivity={handleViewBusinessActivity}
-                            onResetPassword={handleResetBusinessPassword}
-                            onManageServiceOffers={handleManageBusinessServiceOffers}
-                            onManageClients={handleManageBusinessClients} // Pass to BusinessManagement
-                            onManagePortfolio={handleManageBusinessPortfolio} // Pass to BusinessManagement
-                            onViewReviews={handleViewBusinessReviews} // Pass to BusinessManagement
-                        />
-                    );
-                }
+                return (
+                    <BusinessManagement
+                        businesses={allBusinesses}
+                        setBusinesses={setAllBusinesses}
+                        onEditBusiness={handleSelectBusinessForEdit}
+                        onManageStaff={handleManageBusinessStaff}
+                        onViewActivity={handleViewBusinessActivity}
+                        onResetPassword={handleResetBusinessPassword}
+                        onManageServiceOffers={handleManageBusinessServiceOffers}
+                        onManageClients={handleManageBusinessClients}
+                        onManagePortfolio={handleManageBusinessPortfolio}
+                        onViewReviews={handleViewBusinessReviews}
+                    />
+                );
             case 'booking-management':
-                return <BookingManagement allBusinesses={allBusinesses} />;
+                return (
+                    <BookingManagement
+                        allBusinesses={allBusinesses}
+                        allUsers={allUsers} // Pass allUsers to BookingManagement
+                        onViewUserProfile={handleSelectUserForEdit} // Pass callback to view user profile
+                        onViewBusinessProfile={handleSelectBusinessForEdit} // Pass callback to view business profile
+                        onEditBookingFromMgmt={handleEditBookingFromMgmt} // Pass callback to BookingManagement
+                        onCloseBookingEditor={handleCloseBookingEditor} // Pass callback to BookingManagement
+                    />
+                );
             case 'payments-transactions':
                 return <PaymentsTransactions />;
             case 'reviews-ratings-reports':
@@ -4239,19 +4653,36 @@ const App: React.FC = () => {
 
     return (
         <div style={{ display: 'flex', minHeight: '100vh', width: '100%' }}>
-            <Sidebar activeSection={activeSection} onSelectSection={setActiveSection} onToggleDarkMode={toggleDarkMode} isDarkMode={isDarkMode} />
+            {isLoggedIn && (
+                <Sidebar activeSection={activeSection} onSelectSection={setActiveSection} onOpenSettings={handleOpenSettings} onLogout={handleLogout} />
+            )}
             {/* The right side container for Header and ContentArea */}
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}> {/* Removed height: 100vh here, letting flex:1 handle height */}
-                <Header
-                    currentSectionTitle={sectionNames[activeSection]}
-                    titleOverride={titleOverride}
-                    onGoBack={onGoBack}
-                    showBackButton={showBackButton}
-                />
+                {isLoggedIn && (
+                    <Header
+                        currentSectionTitle={sectionNames[activeSection]}
+                        titleOverride={titleOverride}
+                        onGoBack={onGoBack}
+                        showBackButton={showBackButton}
+                    />
+                )}
                 <ContentArea>
                     {renderContent()}
                 </ContentArea>
             </div>
+            {isLoggedIn && ( // Only render settings modal if logged in
+                <SettingsModal
+                    isOpen={isSettingsModalOpen}
+                    onClose={handleCloseSettings}
+                    isDarkMode={isDarkMode}
+                    onToggleDarkMode={toggleDarkMode}
+                    adminCredentials={adminCredentials}
+                    adminPassword={adminPassword} // Pass for verification
+                    onUpdateAdminLogin={handleUpdateAdminLogin}
+                    onUpdateAdminPassword={handleUpdateAdminPassword}
+                    onResetAdminPasswordRequest={handleResetAdminPasswordRequest}
+                />
+            )}
         </div>
     );
 };
