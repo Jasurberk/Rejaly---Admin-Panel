@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en" style="height: 100%;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rejaly Admin Panel</title>
+    <style>
+        :root {
+            --background-color: #f8f9fa;
+            --text-color: #212529;
+            --text-color-light-gray: #6c757d; /* New variable for lighter text */
+            --header-bg: #ffffff;
+            --sidebar-bg: #343a40;
+            --sidebar-text: #ffffff;
+            --sidebar-hover-bg: #495057;
+            --card-bg: #ffffff;
+            --border-color: #e9ecef;
+            --primary-color: #007bff;
+            --primary-hover-color: #0056b3;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+        }
+
+        body[data-theme='dark'] {
+            --background-color: #212529;
+            --text-color: #f8f9fa;
+            --text-color-light-gray: #ced4da; /* Dark mode version */
+            --header-bg: #343a40;
+            --sidebar-bg: #1c1f23;
+            --sidebar-text: #f8f9fa;
+            --sidebar-hover-bg: #495057;
+            --card-bg: #282c34;
+            --border-color: #495057;
+            --primary-color: #6a9cff;
+            --primary-hover-color: #4c7ed9;
+            --success-color: #28a745; /* Can be adjusted for dark mode */
+            --danger-color: #dc3545; /* Can be adjusted for dark mode */
+        }
+
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
+            background-color: var(--background-color);
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
+            height: 100%; /* Ensure body takes full height */
+        }
+
+        #root {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Basic form element styling */
+        input[type="text"],
+        input[type="email"],
+        input[type="tel"],
+        input[type="password"],
+        input[type="number"],
+        input[type="date"], /* Added for date input consistency */
+        textarea,
+        select {
+            padding: 8px;
+            /* margin-bottom: 10px; */ /* Removed global margin-bottom to control via React */
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            transition: border-color 0.3s;
+            box-sizing: border-box;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            border-color: var(--primary-color);
+            outline: none;
+        }
+
+        button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            background-color: var(--primary-color);
+            color: var(--sidebar-text);
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: var(--primary-hover-color);
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+
+        .btn-success {
+            background-color: var(--success-color);
+        }
+
+        .btn-success:hover {
+            background-color: #218838;
+        }
+
+        .btn-danger {
+            background-color: var(--danger-color);
+        }
+
+        .btn-danger:hover {
+            background-color: #c82333;
+        }
+    </style>
+<script type="importmap">
+{
+  "imports": {
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/"
+  }
+}
+</script>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="module" src="./index.tsx"></script>
+</body>
+</html>
