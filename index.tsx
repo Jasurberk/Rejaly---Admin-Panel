@@ -1002,12 +1002,25 @@ const StaffProfileEditor: React.FC<StaffProfileEditorProps> = ({ staffMember, on
         setFormData(staffMember);
     }, [staffMember]);
 
+    // Fix: Refactored handleChange to correctly handle boolean 'active' from select and avoid 'checked' property error.
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-        const { name, value, type, checked } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: type === 'checkbox' ? checked : value,
-        }));
+        const { name, value } = e.target;
+        if (name === 'active') { // Specific handling for the status select
+            setFormData(prev => ({
+                ...prev,
+                active: value === 'Active', // Convert string 'Active'/'Inactive' to boolean
+            }));
+        } else if (e.target instanceof HTMLInputElement && e.target.type === 'checkbox') {
+            setFormData(prev => ({
+                ...prev,
+                [name]: e.target.checked,
+            }));
+        } else {
+            setFormData(prev => ({
+                ...prev,
+                [name]: value,
+            }));
+        }
     };
 
     const handleSave = () => {
@@ -1082,7 +1095,8 @@ const StaffProfileEditor: React.FC<StaffProfileEditorProps> = ({ staffMember, on
                 </div>
                 <div style={{ marginBottom: '10px' }}>
                     <label htmlFor="staffStatus" style={{ display: 'block', marginBottom: '3px', fontSize: '0.9em', color: 'var(--text-color-light-gray)' }}>Status:</label>
-                    <select id="staffStatus" name="active" value={formData.active ? 'Active' : 'Inactive'} onChange={e => handleChange({ ...e, target: { ...e.target, value: e.target.value === 'Active' ? 'true' : 'false', type: 'checkbox' } as HTMLSelectElement })} style={{ width: '100%' }} aria-label="Staff Status">
+                    {/* Fix: Simplified onChange to use the refactored handleChange */}
+                    <select id="staffStatus" name="active" value={formData.active ? 'Active' : 'Inactive'} onChange={handleChange} style={{ width: '100%' }} aria-label="Staff Status">
                         <option value="Active">Active</option>
                         <option value="Inactive">Inactive</option>
                     </select>
@@ -1173,6 +1187,7 @@ const StaffPasswordReset: React.FC<StaffPasswordResetProps> = ({ staffMember, on
             </div>
             <div style={{ marginBottom: '20px' }}>
                 <label htmlFor="staffConfirmPassword" style={{ display: 'block', marginBottom: '3px', fontSize: '0.9em', color: 'var(--text-color-light-gray)' }}>Confirm New Password:</label>
+                {/* Fix: Changed setConfirmNewPassword to setConfirmPassword */}
                 <input type="password" id="staffConfirmPassword" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} style={{ width: '100%' }} aria-label="Confirm New Password" />
             </div>
 
@@ -3276,7 +3291,7 @@ const BookingEditor: React.FC<BookingEditorProps> = ({ booking, onClose, onSave,
             margin: '0 auto',
             height: 'fit-content',
             overflowY: 'auto',
-            boxSizing: 'border-box',
+            boxSizing: 'border-sizing',
         }}>
             <h4 style={{ marginTop: 0, marginBottom: '20px', textAlign: 'center', color: 'var(--text-color)' }}>
                 Edit Booking: {booking.id}
@@ -4409,7 +4424,7 @@ const App: React.FC = () => {
             onGoBack = handleUserSubViewClose; // This now smartly navigates back
             switch (userSubView) {
                 case 'editProfile': titleOverride = 'Edit User Profile'; break;
-                case 'viewActivity': titleOverride = 'User Activity History'; break;
+                case 'viewActivity': titleOverride = 'User Activity History'; break;;
                 case 'resetPassword': titleOverride = 'Reset User Password'; break;
             }
         }
